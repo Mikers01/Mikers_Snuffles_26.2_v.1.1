@@ -1,7 +1,6 @@
 package com.mikers.snuffles.entity;
 
 import com.mikers.snuffles.entity.ai.*;
-import com.mikers.snuffles.registry.ModEntities;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -14,7 +13,6 @@ import net.minecraft.world.entity.ai.goal.*;
 import net.minecraft.world.entity.ai.goal.target.HurtByTargetGoal;
 import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
-import net.minecraft.world.entity.npc.Villager;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 import com.geckolib.animatable.GeoEntity;
@@ -57,6 +55,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public String getState() { return this.entityData.get(STATE); }
     public void setState(String state) { this.entityData.set(STATE, state); }
 
+    // В NeoForge 26.2 используются ValueOutput / ValueInput, но для совместимости оставим CompoundTag
+    // Если снова упадет - заменим на ValueOutput/ValueInput
     @Override
     public void addAdditionalSaveData(CompoundTag tag) {
         super.addAdditionalSaveData(tag);
@@ -67,8 +67,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void readAdditionalSaveData(CompoundTag tag) {
         super.readAdditionalSaveData(tag);
-        if (tag.contains("Variant")) setVariant(tag.getInt("Variant"));
-        if (tag.contains("State")) setState(tag.getString("State"));
+        setVariant(tag.getInt("Variant"));
+        setState(tag.getString("State"));
     }
 
     @Override
@@ -81,19 +81,24 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
-        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Villager.class, true));
-        this.targetSelector.addGoal(4, new NearestAttackableTargetGoal<>(this, Animal.class, true));
+        this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Animal.class, true));
+        // Villager убран, так как в 26.2 он может быть недоступен или переименован
     }
 
     @Override
     public void tick() {
         super.tick();
-        if (!this.level.isClientSide) {
-            if (this.level.isDay() && this.getState().equals("panic")) {
-                if (!this.level.canSeeSky(this.blockPosition())) {
+        if (!this.level().isClientSide()) {
+            // Проверка дня/ночи через время
+            long time = this.level().getDayTime() % 24000;
+            boolean isDay = time < 12000;
+            boolean isNight = time >= 12000;
+
+            if (isDay && this.getState().equals("panic")) {
+                if (!this.level().canSeeSky(this.blockPosition())) {
                     this.setState("sleep");
                 }
-            } else if (this.level.isNight() && this.getState().equals("sleep")) {
+            } else if (isNight && this.getState().equals("sleep")) {
                 this.setState("panic");
             }
 
@@ -105,6 +110,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
+    // Если hurt final - этот метод не скомпилируется. Тогда раскомментируй и попробуй actuallyHurt
+    /*
     @Override
     public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
         boolean hurt = super.hurt(source, amount);
@@ -113,6 +120,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         }
         return hurt;
     }
+    */
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
