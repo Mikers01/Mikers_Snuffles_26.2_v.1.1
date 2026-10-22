@@ -25,7 +25,7 @@ public class BreakBlocksGoal extends Goal {
             return false;
         }
 
-        Level level = this.mob.level;
+        Level level = this.mob.level();
         if (level == null) return false;
 
         BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
@@ -39,7 +39,7 @@ public class BreakBlocksGoal extends Goal {
 
     @Override
     public void tick() {
-        Level level = this.mob.level;
+        Level level = this.mob.level();
         if (level == null) return;
 
         BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
@@ -56,11 +56,19 @@ public class BreakBlocksGoal extends Goal {
 
     private boolean isValidBlock(BlockState state) {
         if (state.isAir()) return false;
+        // Используем конкретные теги руд, так как BlockTags.ORES может не существовать
         if (state.is(BlockTags.BASE_STONE_OVERWORLD) ||
                 state.is(BlockTags.DIRT) ||
                 state.is(BlockTags.LOGS) ||
                 state.is(BlockTags.SAND) ||
-                state.is(BlockTags.ORES)) {
+                state.is(BlockTags.COAL_ORES) ||
+                state.is(BlockTags.IRON_ORES) ||
+                state.is(BlockTags.GOLD_ORES) ||
+                state.is(BlockTags.DIAMOND_ORES) ||
+                state.is(BlockTags.REDSTONE_ORES) ||
+                state.is(BlockTags.LAPIS_ORES) ||
+                state.is(BlockTags.EMERALD_ORES) ||
+                state.is(BlockTags.COPPER_ORES)) {
             return true;
         }
         return state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY);
