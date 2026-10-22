@@ -2,8 +2,8 @@ package com.mikers.snuffles.registry;
 
 import com.mikers.snuffles.MikersSnufflesMod;
 import net.minecraft.core.BlockPos;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.SpawnPlacementTypes;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.levelgen.Heightmap;
 import net.neoforged.bus.api.SubscribeEvent;
@@ -19,9 +19,9 @@ public class ModSpawns {
                 SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 (type, level, spawnType, pos, random) -> {
-                    // Приводим к ServerLevel
-                    if (level instanceof ServerLevel serverLevel) {
-                        long time = serverLevel.getLevelData().getDayTime() % 24000;
+                    // Приводим ServerLevelAccessor к Level, чтобы вызвать dayTime()
+                    if (level instanceof Level realLevel) {
+                        long time = realLevel.dayTime() % 24000;
                         if (time < 12000) return false;
                     } else {
                         return false;
