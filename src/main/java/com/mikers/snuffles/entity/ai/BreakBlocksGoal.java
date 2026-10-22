@@ -56,19 +56,19 @@ public class BreakBlocksGoal extends Goal {
 
     private boolean isValidBlock(BlockState state) {
         if (state.isAir()) return false;
-        // Используем конкретные теги руд, так как BlockTags.ORES может не существовать
+        // Вместо тегов руд (которые могут быть удалены) используем конкретные блоки
         if (state.is(BlockTags.BASE_STONE_OVERWORLD) ||
                 state.is(BlockTags.DIRT) ||
                 state.is(BlockTags.LOGS) ||
                 state.is(BlockTags.SAND) ||
-                state.is(BlockTags.COAL_ORES) ||
-                state.is(BlockTags.IRON_ORES) ||
-                state.is(BlockTags.GOLD_ORES) ||
-                state.is(BlockTags.DIAMOND_ORES) ||
-                state.is(BlockTags.REDSTONE_ORES) ||
-                state.is(BlockTags.LAPIS_ORES) ||
-                state.is(BlockTags.EMERALD_ORES) ||
-                state.is(BlockTags.COPPER_ORES)) {
+                state.is(Blocks.COAL_ORE) ||
+                state.is(Blocks.IRON_ORE) ||
+                state.is(Blocks.GOLD_ORE) ||
+                state.is(Blocks.DIAMOND_ORE) ||
+                state.is(Blocks.REDSTONE_ORE) ||
+                state.is(Blocks.LAPIS_ORE) ||
+                state.is(Blocks.EMERALD_ORE) ||
+                state.is(Blocks.COPPER_ORE)) {
             return true;
         }
         return state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY);
