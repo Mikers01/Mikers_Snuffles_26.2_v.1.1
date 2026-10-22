@@ -21,15 +21,11 @@ public class BreakBlocksGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (!this.mob.getState().equals("panic") && !this.mob.getState().equals("attack")) {
+        if (this.mob.getState().equals("sleep") || this.mob.getTarget() == null) {
             return false;
         }
-
-        Level level = this.mob.level();
-        if (level == null) return false;
-
-        BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
-        return isValidBlock(level.getBlockState(front));
+        // Ищем блоки перед собой
+        return findBlockToBreak() != null;
     }
 
     @Override
@@ -39,38 +35,39 @@ public class BreakBlocksGoal extends Goal {
 
     @Override
     public void tick() {
-        Level level = this.mob.level();
-        if (level == null) return;
-
-        BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
-        BlockState state = level.getBlockState(front);
-
-        if (isValidBlock(state)) {
-            this.breakProgress++;
-            if (this.breakProgress >= 10) {
-                level.destroyBlock(front, true);
-                this.breakProgress = 0;
+        BlockPos targetPos = findBlockToBreak();
+        if (targetPos != null) {
+            BlockState state = this.mob.level().getBlockState(targetPos);
+            if (isValidBlock(state)) {
+                this.breakProgress++;
+                if (this.breakProgress >= 10) {
+                    this.mob.level().destroyBlock(targetPos, true);
+                    this.breakProgress = 0;
+                }
             }
         }
     }
 
+    private BlockPos findBlockToBreak() {
+        Level level = this.mob.level();
+        BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
+        BlockPos frontUp = front.above(); // Блок над головой (чтобы пролезть)
+        
+        // Если впереди блок и над ним тоже блок (проход 1 блок высотой) - ломаем оба
+        if (isValidBlock(level.getBlockState(front))) {
+            if (isValidBlock(level.getBlockState(frontUp))) {
+                return frontUp; // Сначала ломаем верхний
+            }
+            return front; // Потом нижний
+        }
+        return null;
+    }
+
     private boolean isValidBlock(BlockState state) {
         if (state.isAir()) return false;
-        // Вместо тегов руд (которые могут быть удалены) используем конкретные блоки
-        if (state.is(BlockTags.BASE_STONE_OVERWORLD) ||
-                state.is(BlockTags.DIRT) ||
-                state.is(BlockTags.LOGS) ||
-                state.is(BlockTags.SAND) ||
-                state.is(Blocks.COAL_ORE) ||
-                state.is(Blocks.IRON_ORE) ||
-                state.is(Blocks.GOLD_ORE) ||
-                state.is(Blocks.DIAMOND_ORE) ||
-                state.is(Blocks.REDSTONE_ORE) ||
-                state.is(Blocks.LAPIS_ORE) ||
-                state.is(Blocks.EMERALD_ORE) ||
-                state.is(Blocks.COPPER_ORE)) {
-            return true;
-        }
-        return state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY);
+        return state.is(BlockTags.BASE_STONE_OVERWORLD) || state.is(BlockTags.DIRT) ||
+               state.is(BlockTags.LOGS) || state.is(BlockTags.SAND) ||
+               state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY) ||
+               state.is(Blocks.COAL_ORE) || state.is(Blocks.IRON_ORE) || state.is(Blocks.DIAMOND_ORE);
     }
 }
