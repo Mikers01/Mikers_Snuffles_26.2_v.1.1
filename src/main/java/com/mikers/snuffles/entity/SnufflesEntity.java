@@ -1,7 +1,6 @@
 package com.mikers.snuffles.entity;
 
 import com.mikers.snuffles.entity.ai.*;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -15,6 +14,8 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import com.geckolib.animatable.GeoEntity;
 import com.geckolib.animatable.instance.AnimatableInstanceCache;
 import com.geckolib.animatable.manager.AnimatableManager;
@@ -55,20 +56,20 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public String getState() { return this.entityData.get(STATE); }
     public void setState(String state) { this.entityData.set(STATE, state); }
 
-    // В NeoForge 26.2 используются ValueOutput / ValueInput, но для совместимости оставим CompoundTag
-    // Если снова упадет - заменим на ValueOutput/ValueInput
+    // NeoForge 26.2 использует ValueOutput / ValueInput
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
-        super.addAdditionalSaveData(tag);
-        tag.putInt("Variant", getVariant());
-        tag.putString("State", getState());
+    public void addAdditionalSaveData(ValueOutput output) {
+        super.addAdditionalSaveData(output);
+        output.putInt("Variant", getVariant());
+        output.putString("State", getState());
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
-        super.readAdditionalSaveData(tag);
-        setVariant(tag.getInt("Variant"));
-        setState(tag.getString("State"));
+    public void readAdditionalSaveData(ValueInput input) {
+        super.readAdditionalSaveData(input);
+        // getInt и getString возвращают Optional, поэтому используем orElse
+        this.setVariant(input.getInt("Variant").orElse(0));
+        this.setState(input.getString("State").orElse("panic"));
     }
 
     @Override
@@ -82,15 +83,15 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Animal.class, true));
-        // Villager убран, так как в 26.2 он может быть недоступен или переименован
     }
 
     @Override
     public void tick() {
         super.tick();
+        // isClientSide() - метод, а не поле
         if (!this.level().isClientSide()) {
-            // Проверка дня/ночи через время
-            long time = this.level().getDayTime() % 24000;
+            // Вместо getDayTime() используем dayTime()
+            long time = this.level().dayTime() % 24000;
             boolean isDay = time < 12000;
             boolean isNight = time >= 12000;
 
@@ -110,7 +111,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
-    // Если hurt final - этот метод не скомпилируется. Тогда раскомментируй и попробуй actuallyHurt
+    // Метод hurt может быть final, поэтому временно комментируем.
+    // Если сборка пройдет, мы вернем логику через actuallyHurt или другой метод.
     /*
     @Override
     public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
