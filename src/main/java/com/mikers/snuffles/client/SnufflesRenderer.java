@@ -13,9 +13,9 @@ public class SnufflesRenderer extends GeoEntityRenderer<SnufflesEntity, GeoRende
 
     @Override
     public ResourceLocation getTextureLocation(GeoRenderState renderState) {
-        // Получаем вариант текстуры из рендер-стейта (нужно будет прокинуть в DataTicket)
-        // Для простоты используем фиксированный путь, но лучше передавать variant
-        return ResourceLocation.fromNamespaceAndPath("mikers_snuffles", 
-            "textures/entity/mikers_snuffles" + (renderState.getOrDefault(/* variant */ 1)) + ".png");
+        // В GeckoLib 5 текстура по умолчанию берётся из модели.
+        // Для смены вариантов нужно использовать DataTickets, но пока оставим базовую.
+        return ResourceLocation.fromNamespaceAndPath("mikers_snuffles",
+                "textures/entity/mikers_snuffles1.png");
     }
 }
