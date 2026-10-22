@@ -4,6 +4,7 @@ import com.mikers.snuffles.entity.ai.*;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -87,18 +88,19 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public void tick() {
         super.tick();
         if (!this.level().isClientSide()) {
-            // Используем getTimeOfDay(0.0F) - возвращает float от 0.0 до 1.0
-            // День примерно с 0.0 до 0.5, ночь с 0.5 до 1.0
-            float timeOfDay = this.level().getTimeOfDay(0.0F);
-            boolean isDay = timeOfDay < 0.5F;
-            boolean isNight = timeOfDay >= 0.5F;
+            // Приводим к ServerLevel, чтобы получить LevelData
+            if (this.level() instanceof ServerLevel serverLevel) {
+                long time = serverLevel.getLevelData().getDayTime() % 24000;
+                boolean isDay = time < 12000;
+                boolean isNight = time >= 12000;
 
-            if (isDay && this.getState().equals("panic")) {
-                if (!this.level().canSeeSky(this.blockPosition())) {
-                    this.setState("sleep");
+                if (isDay && this.getState().equals("panic")) {
+                    if (!serverLevel.canSeeSky(this.blockPosition())) {
+                        this.setState("sleep");
+                    }
+                } else if (isNight && this.getState().equals("sleep")) {
+                    this.setState("panic");
                 }
-            } else if (isNight && this.getState().equals("sleep")) {
-                this.setState("panic");
             }
 
             if (this.getState().equals("panic") && this.getTarget() != null) {
