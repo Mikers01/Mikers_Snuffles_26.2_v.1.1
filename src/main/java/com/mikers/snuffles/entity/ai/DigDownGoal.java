@@ -4,7 +4,6 @@ import com.mikers.snuffles.entity.SnufflesEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.ai.goal.Goal;
-import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.state.BlockState;
 
@@ -21,11 +20,10 @@ public class DigDownGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        // Копаем только днем и если не спим
+        // Копаем днем, если нет цели и видим небо
         if (!this.mob.getState().equals("panic") || this.mob.getTarget() != null) {
             return false;
         }
-        // Если видим небо - значит мы на поверхности, надо копать
         return this.mob.level().canSeeSky(this.mob.blockPosition());
     }
 
