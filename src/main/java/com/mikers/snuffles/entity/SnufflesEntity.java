@@ -136,3 +136,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         return this.cache;
     }
 }
+    public SnufflesEntity(EntityType<? extends PathfinderMob> type, Level level) {
+        super(type, level);
+        // Рандомный выбор текстуры от 1 до 4 при спавне
+        this.setVariant(this.random.nextInt(4) + 1);
+    }
