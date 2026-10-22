@@ -4,7 +4,6 @@ import com.mikers.snuffles.entity.ai.*;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
-import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -34,6 +33,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
 
     public SnufflesEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
+        // Рандомный выбор текстуры от 1 до 4 при спавне
+        this.setVariant(this.random.nextInt(4) + 1);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -47,7 +48,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
-        builder.define(VARIANT, 0);
+        builder.define(VARIANT, 1);
         builder.define(STATE, "panic");
     }
 
@@ -67,7 +68,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
-        this.setVariant(input.getInt("Variant").orElse(0));
+        this.setVariant(input.getInt("Variant").orElse(1));
         this.setState(input.getString("State").orElse("panic"));
     }
 
@@ -88,7 +89,6 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public void tick() {
         super.tick();
         if (!this.level().isClientSide()) {
-            // getGameTime() точно есть у Level, это базовый метод
             long time = this.level().getGameTime() % 24000;
             boolean isDay = time < 12000;
             boolean isNight = time >= 12000;
@@ -136,8 +136,3 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         return this.cache;
     }
 }
-    public SnufflesEntity(EntityType<? extends PathfinderMob> type, Level level) {
-        super(type, level);
-        // Рандомный выбор текстуры от 1 до 4 при спавне
-        this.setVariant(this.random.nextInt(4) + 1);
-    }
