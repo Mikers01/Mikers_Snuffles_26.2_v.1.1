@@ -18,7 +18,8 @@ public class ModSpawns {
                 SpawnPlacementTypes.ON_GROUND,
                 Heightmap.Types.MOTION_BLOCKING_NO_LEAVES,
                 (type, level, spawnType, pos, random) -> {
-                    long time = level.getLevelData().getDayTime() % 24000;
+                    // Используем dayTime()
+                    long time = level.dayTime() % 24000;
                     if (time < 12000) return false;
 
                     BlockPos.MutableBlockPos mutable = new BlockPos.MutableBlockPos();
