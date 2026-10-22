@@ -7,7 +7,7 @@ import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.Monster;
+import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.*;
@@ -24,7 +24,7 @@ import com.geckolib.animation.AnimationController;
 import com.geckolib.animation.RawAnimation;
 import com.geckolib.util.GeckoLibUtil;
 
-public class SnufflesEntity extends Monster implements GeoEntity {
+public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<Integer> VARIANT =
             SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> STATE =
@@ -32,12 +32,12 @@ public class SnufflesEntity extends Monster implements GeoEntity {
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
-    public SnufflesEntity(EntityType<? extends Monster> type, Level level) {
+    public SnufflesEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
-        return Monster.createMonsterAttributes()
+        return PathfinderMob.createMobAttributes()
                 .add(Attributes.MAX_HEALTH, 24.0D)
                 .add(Attributes.ATTACK_DAMAGE, 13.0D)
                 .add(Attributes.MOVEMENT_SPEED, 0.3F)
@@ -88,12 +88,12 @@ public class SnufflesEntity extends Monster implements GeoEntity {
     @Override
     public void tick() {
         super.tick();
-        if (!this.level().isClientSide) {
-            if (this.level().isDay() && this.getState().equals("panic")) {
-                if (!this.level().canSeeSky(this.blockPosition())) {
+        if (!this.level.isClientSide) {
+            if (this.level.isDay() && this.getState().equals("panic")) {
+                if (!this.level.canSeeSky(this.blockPosition())) {
                     this.setState("sleep");
                 }
-            } else if (this.level().isNight() && this.getState().equals("sleep")) {
+            } else if (this.level.isNight() && this.getState().equals("sleep")) {
                 this.setState("panic");
             }
 
