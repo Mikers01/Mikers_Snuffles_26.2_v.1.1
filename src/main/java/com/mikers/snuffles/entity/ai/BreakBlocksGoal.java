@@ -24,7 +24,6 @@ public class BreakBlocksGoal extends Goal {
         if (this.mob.getState().equals("sleep") || this.mob.getTarget() == null) {
             return false;
         }
-        // Ищем блоки перед собой
         return findBlockToBreak() != null;
     }
 
@@ -51,14 +50,14 @@ public class BreakBlocksGoal extends Goal {
     private BlockPos findBlockToBreak() {
         Level level = this.mob.level();
         BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
-        BlockPos frontUp = front.above(); // Блок над головой (чтобы пролезть)
+        BlockPos frontUp = front.above();
         
-        // Если впереди блок и над ним тоже блок (проход 1 блок высотой) - ломаем оба
+        // Ломаем 2 блока в высоту, чтобы пролезть
         if (isValidBlock(level.getBlockState(front))) {
             if (isValidBlock(level.getBlockState(frontUp))) {
-                return frontUp; // Сначала ломаем верхний
+                return frontUp;
             }
-            return front; // Потом нижний
+            return front;
         }
         return null;
     }
