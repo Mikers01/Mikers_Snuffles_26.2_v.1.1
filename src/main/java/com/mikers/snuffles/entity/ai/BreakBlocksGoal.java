@@ -2,8 +2,8 @@ package com.mikers.snuffles.entity.ai;
 
 import com.mikers.snuffles.entity.SnufflesEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
+import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -25,11 +25,12 @@ public class BreakBlocksGoal extends Goal {
         if (!this.mob.getState().equals("panic") && !this.mob.getState().equals("attack")) {
             return false;
         }
-        
-        // Используем прямой вызов через поле level (в старых версиях) или через getLevel()
+
+        // Используем поле level напрямую из Entity
         Level level = this.mob.level();
         if (level == null) return false;
 
+        // blockPosition() и getDirection() наследуются от Entity/LivingEntity
         BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
         return isValidBlock(level.getBlockState(front));
     }
@@ -46,7 +47,7 @@ public class BreakBlocksGoal extends Goal {
 
         BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
         BlockState state = level.getBlockState(front);
-        
+
         if (isValidBlock(state)) {
             this.breakProgress++;
             if (this.breakProgress >= 10) {
