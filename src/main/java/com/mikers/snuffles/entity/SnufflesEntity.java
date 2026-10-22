@@ -87,10 +87,11 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public void tick() {
         super.tick();
         if (!this.level().isClientSide()) {
-            // Используем dayTime() вместо getDayTime()
-            long time = this.level().dayTime() % 24000;
-            boolean isDay = time < 12000;
-            boolean isNight = time >= 12000;
+            // Используем getTimeOfDay(0.0F) - возвращает float от 0.0 до 1.0
+            // День примерно с 0.0 до 0.5, ночь с 0.5 до 1.0
+            float timeOfDay = this.level().getTimeOfDay(0.0F);
+            boolean isDay = timeOfDay < 0.5F;
+            boolean isNight = timeOfDay >= 0.5F;
 
             if (isDay && this.getState().equals("panic")) {
                 if (!this.level().canSeeSky(this.blockPosition())) {
