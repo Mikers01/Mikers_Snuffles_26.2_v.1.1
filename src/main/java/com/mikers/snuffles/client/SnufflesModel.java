@@ -6,7 +6,7 @@ import software.bernie.geckolib.model.DefaultedEntityGeoModel;
 
 public class SnufflesModel extends DefaultedEntityGeoModel<SnufflesEntity> {
     public SnufflesModel() {
-        // Путь к модели: geo/mikers_snuffles.geo.json
+        // GeckoLib 5 ищет модель в geckolib/models/entity/
         super(ResourceLocation.fromNamespaceAndPath("mikers_snuffles", "mikers_snuffles"));
     }
 }
