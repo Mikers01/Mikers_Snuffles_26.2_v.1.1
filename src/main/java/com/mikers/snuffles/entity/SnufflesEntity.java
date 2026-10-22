@@ -25,10 +25,10 @@ import software.bernie.geckolib.animation.RawAnimation;
 import software.bernie.geckolib.util.GeckoLibUtil;
 
 public class SnufflesEntity extends Monster implements GeoEntity {
-    private static final EntityDataAccessor<Integer> VARIANT = 
-        SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.INT);
-    private static final EntityDataAccessor<String> STATE = 
-        SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.STRING);
+    private static final EntityDataAccessor<Integer> VARIANT =
+            SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.INT);
+    private static final EntityDataAccessor<String> STATE =
+            SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.STRING);
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
@@ -38,10 +38,10 @@ public class SnufflesEntity extends Monster implements GeoEntity {
 
     public static AttributeSupplier.Builder createAttributes() {
         return Monster.createMonsterAttributes()
-            .add(Attributes.MAX_HEALTH, 24.0D)
-            .add(Attributes.ATTACK_DAMAGE, 13.0D)
-            .add(Attributes.MOVEMENT_SPEED, 0.3F)
-            .add(Attributes.FOLLOW_RANGE, 32.0D);
+                .add(Attributes.MAX_HEALTH, 24.0D)
+                .add(Attributes.ATTACK_DAMAGE, 13.0D)
+                .add(Attributes.MOVEMENT_SPEED, 0.3F)
+                .add(Attributes.FOLLOW_RANGE, 32.0D);
     }
 
     @Override
@@ -53,7 +53,7 @@ public class SnufflesEntity extends Monster implements GeoEntity {
 
     public int getVariant() { return this.entityData.get(VARIANT); }
     public void setVariant(int variant) { this.entityData.set(VARIANT, variant); }
-    
+
     public String getState() { return this.entityData.get(STATE); }
     public void setState(String state) { this.entityData.set(STATE, state); }
 
@@ -78,7 +78,7 @@ public class SnufflesEntity extends Monster implements GeoEntity {
         this.goalSelector.addGoal(2, new BreakBlocksGoal(this));
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
-        
+
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
         this.targetSelector.addGoal(3, new NearestAttackableTargetGoal<>(this, Villager.class, true));
@@ -90,7 +90,6 @@ public class SnufflesEntity extends Monster implements GeoEntity {
         super.tick();
         if (!this.level().isClientSide) {
             if (this.level().isDay() && this.getState().equals("panic")) {
-                // Упрощенная логика: днем пытаемся найти укрытие или спим
                 if (!this.level().canSeeSky(this.blockPosition())) {
                     this.setState("sleep");
                 }
@@ -120,17 +119,17 @@ public class SnufflesEntity extends Monster implements GeoEntity {
         controllers.add(new AnimationController<>(this, "main", 5, state -> {
             String currentState = this.getState();
             if (currentState.equals("sleep")) {
-                return state.setAndContinue(RawAnimation.begin().thenLoop("sleeping"));
+                return state.setAndContinue(RawAnimation.begin().thenLoop("Sleeping"));
             } else if (currentState.equals("attack")) {
-                return state.setAndContinue(RawAnimation.begin().thenLoop("sprinting"));
+                return state.setAndContinue(RawAnimation.begin().thenLoop("Sprinting"));
             } else if (currentState.equals("panic")) {
                 if (this.isMoving()) {
-                    return state.setAndContinue(RawAnimation.begin().thenLoop("running"));
+                    return state.setAndContinue(RawAnimation.begin().thenLoop("Running"));
                 }
-                return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
+                return state.setAndContinue(RawAnimation.begin().thenLoop("Idle"));
             }
-            return state.setAndContinue(RawAnimation.begin().thenLoop("idle"));
-        }).triggerableAnim("attack", RawAnimation.begin().thenPlay("attack")));
+            return state.setAndContinue(RawAnimation.begin().thenLoop("Idle"));
+        }).triggerableAnim("attack", RawAnimation.begin().thenPlay("Attack")));
     }
 
     private boolean isMoving() {
