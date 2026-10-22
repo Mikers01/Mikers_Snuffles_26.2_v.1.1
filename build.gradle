@@ -15,12 +15,22 @@ neoForge {
 
 repositories {
     mavenCentral()
-    maven { url = 'https://cursemaven.com' }
+    exclusiveContent {
+        forRepository {
+            maven {
+                name = 'GeckoLib'
+                url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
+            }
+        }
+        filter { includeGroupAndSubgroups('com.geckolib') }
+    }
 }
 
 dependencies {
-    // GeckoLib 5.5.6 для NeoForge 26.2 (артефакт CurseForge)
-    implementation "curse.maven:geckolib-388172:8264476"
+    // Официальный синтаксис GeckoLib 5 для NeoForge 26.2 [citation:2][citation:12]
+    implementation "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
+    // Рекомендуемая инъекция интерфейсов для ModDevGradle [citation:12]
+    interfaceInjectionData "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 }
 
 tasks.withType(JavaCompile).configureEach {
