@@ -11,11 +11,9 @@ public class ModEvents {
 
     @SubscribeEvent
     public static void onEntityDamage(LivingIncomingDamageEvent event) {
-        // Если урон получает наш Снаффлс и он спит — будим его
         if (event.getEntity() instanceof SnufflesEntity snuffles) {
-            if (snuffles.getState().equals("sleep")) {
-                snuffles.setState("panic");
-            }
+            // При любом уроне включаем панику на минуту
+            snuffles.triggerPanic();
         }
     }
 }
