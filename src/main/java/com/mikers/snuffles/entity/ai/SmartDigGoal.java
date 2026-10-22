@@ -2,7 +2,6 @@ package com.mikers.snuffles.entity.ai;
 
 import com.mikers.snuffles.entity.SnufflesEntity;
 import net.minecraft.core.BlockPos;
-import net.minecraft.core.Direction;
 import net.minecraft.tags.BlockTags;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
@@ -22,16 +21,8 @@ public class SmartDigGoal extends Goal {
 
     @Override
     public boolean canUse() {
-        if (this.mob.getState().equals("sleep")) return false;
-        
-        // Если есть цель и путь заблокирован, или если день и нужно спрятаться
-        if (this.mob.getTarget() != null) {
-            return this.mob.getNavigation().isDone() && isBlockedAhead();
-        } else {
-            // Если нет цели, но день и мы на поверхности - копаем вниз
-            long time = this.mob.level().getGameTime() % 24000;
-            return time < 12000 && this.mob.level().canSeeSky(this.mob.blockPosition());
-        }
+        // Работаем всегда, когда не спим. Логика внутри tick()
+        return !this.mob.getState().equals("sleep");
     }
 
     @Override
@@ -42,38 +33,42 @@ public class SmartDigGoal extends Goal {
     @Override
     public void tick() {
         Level level = this.mob.level();
-        BlockPos targetPos = null;
-
+        
+        // Если есть цель - копаем к ней
         if (this.mob.getTarget() != null) {
-            targetPos = getBlockAhead();
-        } else {
-            targetPos = this.mob.blockPosition().below(); // Копаем вниз
-        }
-
-        if (targetPos != null) {
-            BlockState state = level.getBlockState(targetPos);
-            if (isValidBlock(state)) {
-                this.breakProgress++;
-                if (this.breakProgress >= 10) {
-                    level.destroyBlock(targetPos, true);
-                    this.breakProgress = 0;
+            // Проверяем, не слишком ли далеко цель (если далеко - пусть идет пешком)
+            if (this.mob.distanceToSqr(this.mob.getTarget()) > 4.0D) {
+                return; 
+            }
+            
+            BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
+            BlockPos frontUp = front.above();
+            
+            // Сначала ломаем верхний блок (чтобы пролезть), потом нижний
+            if (isValidBlock(level.getBlockState(frontUp))) {
+                tryBreak(frontUp);
+            } else if (isValidBlock(level.getBlockState(front))) {
+                tryBreak(front);
+            }
+        } 
+        // Если цели нет и день - копаем вниз
+        else {
+            long time = level.getGameTime() % 24000;
+            if (time < 12000 && level.canSeeSky(this.mob.blockPosition())) {
+                BlockPos below = this.mob.blockPosition().below();
+                if (isValidBlock(level.getBlockState(below))) {
+                    tryBreak(below);
                 }
             }
         }
     }
 
-    private boolean isBlockedAhead() {
-        BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
-        return isValidBlock(this.mob.level().getBlockState(front)) || isValidBlock(this.mob.level().getBlockState(front.above()));
-    }
-
-    private BlockPos getBlockAhead() {
-        BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
-        // Копаем 2 блока в высоту
-        if (isValidBlock(this.mob.level().getBlockState(front.above()))) {
-            return front.above();
+    private void tryBreak(BlockPos pos) {
+        this.breakProgress++;
+        if (this.breakProgress >= 10) {
+            this.mob.level().destroyBlock(pos, true);
+            this.breakProgress = 0;
         }
-        return front;
     }
 
     private boolean isValidBlock(BlockState state) {
