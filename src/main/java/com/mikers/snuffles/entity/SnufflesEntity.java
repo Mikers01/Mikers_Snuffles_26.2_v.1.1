@@ -28,12 +28,15 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
             SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.INT);
     private static final EntityDataAccessor<String> STATE =
             SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.STRING);
+    
+    // Таймер паники (1200 тиков = 60 секунд)
+    private int panicTimer = 0;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
 
     public SnufflesEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
-        this.setVariant(this.random.nextInt(4) + 1); // Рандомная текстура
+        this.setVariant(this.random.nextInt(4) + 1);
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -55,13 +58,25 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public void setVariant(int variant) { this.entityData.set(VARIANT, variant); }
 
     public String getState() { return this.entityData.get(STATE); }
-    public void setState(String state) { this.entityData.set(STATE, state); }
+    public void setState(String state) { 
+        this.entityData.set(STATE, state); 
+        if (state.equals("sleep")) {
+            this.getNavigation().stop();
+            this.setDeltaMovement(0, 0, 0);
+        }
+    }
+
+    public void triggerPanic() {
+        this.panicTimer = 1200; // 1 минута
+        this.setState("panic");
+    }
 
     @Override
     public void addAdditionalSaveData(ValueOutput output) {
         super.addAdditionalSaveData(output);
         output.putInt("Variant", getVariant());
         output.putString("State", getState());
+        output.putInt("PanicTimer", this.panicTimer);
     }
 
     @Override
@@ -69,16 +84,16 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         super.readAdditionalSaveData(input);
         this.setVariant(input.getInt("Variant").orElse(1));
         this.setState(input.getString("State").orElse("panic"));
+        this.panicTimer = input.getInt("PanicTimer").orElse(0);
     }
 
     @Override
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2D, false));
-        this.goalSelector.addGoal(2, new BreakBlocksGoal(this));
-        this.goalSelector.addGoal(3, new DigDownGoal(this)); // Копание вниз
-        this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
-        this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
+        this.goalSelector.addGoal(2, new SmartDigGoal(this)); // Умное копание
+        this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0D));
+        this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
         this.targetSelector.addGoal(1, new HurtByTargetGoal(this));
         this.targetSelector.addGoal(2, new NearestAttackableTargetGoal<>(this, Player.class, true));
@@ -91,14 +106,22 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         if (!this.level().isClientSide()) {
             long time = this.level().getGameTime() % 24000;
             boolean isDay = time < 12000;
-            boolean isNight = time >= 12000;
+            
+            // Условие сна: День И не видит неба
+            boolean canSleep = isDay && !this.level().canSeeSky(this.blockPosition());
 
-            // Логика сна и пробуждения
-            if (isDay && !this.getState().equals("sleep")) {
-                this.setState("sleep");
-                this.getNavigation().stop();
-            } else if (isNight && this.getState().equals("sleep")) {
-                this.setState("panic");
+            if (this.panicTimer > 0) {
+                this.panicTimer--;
+                if (this.panicTimer == 0) {
+                    if (canSleep) this.setState("sleep");
+                    else this.setState("panic");
+                }
+            } else {
+                if (canSleep) {
+                    if (!this.getState().equals("sleep")) this.setState("sleep");
+                } else {
+                    if (this.getState().equals("sleep")) this.setState("panic");
+                }
             }
 
             // Логика атаки
@@ -114,22 +137,18 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Убрали this из конструктора, так как в GeckoLib 5 он не принимает сущность первым аргументом
         controllers.add(new AnimationController<>("main", 5, state -> {
             String currentState = this.getState();
             
             if (currentState.equals("sleep")) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("Sleeping"));
             }
-            
             if (currentState.equals("attack") && this.swinging) {
                 return state.setAndContinue(RawAnimation.begin().thenPlay("Attack"));
             }
-            
             if (this.isMoving()) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("Running"));
             }
-            
             return state.setAndContinue(RawAnimation.begin().thenLoop("Idle"));
         }));
     }
