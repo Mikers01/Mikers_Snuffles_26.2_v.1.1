@@ -4,6 +4,7 @@ import com.mikers.snuffles.entity.ai.*;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.PathfinderMob;
 import net.minecraft.world.entity.ai.attributes.AttributeSupplier;
@@ -87,8 +88,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public void tick() {
         super.tick();
         if (!this.level().isClientSide()) {
-            // dayTime() объявлен в LevelTimeAccess, который наследует Level
-            long time = this.level().dayTime() % 24000;
+            // getGameTime() точно есть у Level, это базовый метод
+            long time = this.level().getGameTime() % 24000;
             boolean isDay = time < 12000;
             boolean isNight = time >= 12000;
 
