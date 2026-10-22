@@ -3,7 +3,6 @@ package com.mikers.snuffles.entity.ai;
 import com.mikers.snuffles.entity.SnufflesEntity;
 import net.minecraft.core.BlockPos;
 import net.minecraft.tags.BlockTags;
-import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.ai.goal.Goal;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Blocks;
@@ -26,11 +25,9 @@ public class BreakBlocksGoal extends Goal {
             return false;
         }
 
-        // Используем поле level напрямую из Entity
-        Level level = this.mob.level();
+        Level level = this.mob.level;
         if (level == null) return false;
 
-        // blockPosition() и getDirection() наследуются от Entity/LivingEntity
         BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
         return isValidBlock(level.getBlockState(front));
     }
@@ -42,7 +39,7 @@ public class BreakBlocksGoal extends Goal {
 
     @Override
     public void tick() {
-        Level level = this.mob.level();
+        Level level = this.mob.level;
         if (level == null) return;
 
         BlockPos front = this.mob.blockPosition().relative(this.mob.getDirection());
@@ -59,7 +56,6 @@ public class BreakBlocksGoal extends Goal {
 
     private boolean isValidBlock(BlockState state) {
         if (state.isAir()) return false;
-        // Проверка на природные блоки через теги
         if (state.is(BlockTags.BASE_STONE_OVERWORLD) ||
                 state.is(BlockTags.DIRT) ||
                 state.is(BlockTags.LOGS) ||
@@ -67,7 +63,6 @@ public class BreakBlocksGoal extends Goal {
                 state.is(BlockTags.ORES)) {
             return true;
         }
-        // Или конкретные блоки
         return state.is(Blocks.GRAVEL) || state.is(Blocks.CLAY);
     }
 }
