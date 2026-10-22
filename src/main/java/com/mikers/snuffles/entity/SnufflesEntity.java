@@ -14,6 +14,7 @@ import net.minecraft.world.entity.ai.goal.target.NearestAttackableTargetGoal;
 import net.minecraft.world.entity.animal.Animal;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.LightLayer; // Импорт для проверки света
 import net.minecraft.world.level.storage.ValueInput;
 import net.minecraft.world.level.storage.ValueOutput;
 import com.geckolib.animatable.GeoEntity;
@@ -29,7 +30,6 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     private static final EntityDataAccessor<String> STATE =
             SynchedEntityData.defineId(SnufflesEntity.class, EntityDataSerializers.STRING);
     
-    // Таймер паники (1200 тиков = 60 секунд)
     private int panicTimer = 0;
 
     private final AnimatableInstanceCache cache = GeckoLibUtil.createInstanceCache(this);
@@ -67,7 +67,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     }
 
     public void triggerPanic() {
-        this.panicTimer = 1200; // 1 минута
+        this.panicTimer = 1200;
         this.setState("panic");
     }
 
@@ -91,7 +91,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     protected void registerGoals() {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2D, false));
-        this.goalSelector.addGoal(2, new SmartDigGoal(this)); // Умное копание
+        this.goalSelector.addGoal(2, new SmartDigGoal(this)); 
         this.goalSelector.addGoal(3, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(4, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
@@ -107,20 +107,22 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
             long time = this.level().getGameTime() % 24000;
             boolean isDay = time < 12000;
             
-            // Условие сна: День И не видит неба
-            boolean canSleep = isDay && !this.level().canSeeSky(this.blockPosition());
+            // ИСПРАВЛЕНИЕ: Проверяем не небо, а уровень освещения (свет от блоков и неба)
+            int lightLevel = this.level().getMaxLocalRawBrightness(this.blockPosition());
+            
+            // Если день И света мало (меньше 8) — значит мы в пещере или под землей
+            boolean canSleep = isDay && lightLevel < 8;
 
             if (this.panicTimer > 0) {
                 this.panicTimer--;
                 if (this.panicTimer == 0) {
-                    if (canSleep) this.setState("sleep");
-                    else this.setState("panic");
+                    this.setState(canSleep ? "sleep" : "panic");
                 }
             } else {
-                if (canSleep) {
-                    if (!this.getState().equals("sleep")) this.setState("sleep");
-                } else {
-                    if (this.getState().equals("sleep")) this.setState("panic");
+                if (canSleep && !this.getState().equals("sleep")) {
+                    this.setState("sleep");
+                } else if (!canSleep && this.getState().equals("sleep")) {
+                    this.setState("panic");
                 }
             }
 
@@ -139,16 +141,9 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
         controllers.add(new AnimationController<>("main", 5, state -> {
             String currentState = this.getState();
-            
-            if (currentState.equals("sleep")) {
-                return state.setAndContinue(RawAnimation.begin().thenLoop("Sleeping"));
-            }
-            if (currentState.equals("attack") && this.swinging) {
-                return state.setAndContinue(RawAnimation.begin().thenPlay("Attack"));
-            }
-            if (this.isMoving()) {
-                return state.setAndContinue(RawAnimation.begin().thenLoop("Running"));
-            }
+            if (currentState.equals("sleep")) return state.setAndContinue(RawAnimation.begin().thenLoop("Sleeping"));
+            if (currentState.equals("attack") && this.swinging) return state.setAndContinue(RawAnimation.begin().thenPlay("Attack"));
+            if (this.isMoving()) return state.setAndContinue(RawAnimation.begin().thenLoop("Running"));
             return state.setAndContinue(RawAnimation.begin().thenLoop("Idle"));
         }));
     }
