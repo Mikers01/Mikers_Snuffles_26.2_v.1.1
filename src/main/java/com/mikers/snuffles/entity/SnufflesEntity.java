@@ -33,7 +33,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
 
     public SnufflesEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
-        this.setVariant(this.random.nextInt(4) + 1); // Рандомная текстура при спавне
+        this.setVariant(this.random.nextInt(4) + 1); // Рандомная текстура
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -76,7 +76,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2D, false));
         this.goalSelector.addGoal(2, new BreakBlocksGoal(this));
-        this.goalSelector.addGoal(3, new DigDownGoal(this)); // Новый Goal для копания вниз
+        this.goalSelector.addGoal(3, new DigDownGoal(this)); // Копание вниз
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
@@ -93,10 +93,10 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
             boolean isDay = time < 12000;
             boolean isNight = time >= 12000;
 
-            // Логика переключения состояний (День/Ночь)
+            // Логика сна и пробуждения
             if (isDay && !this.getState().equals("sleep")) {
                 this.setState("sleep");
-                this.getNavigation().stop(); // Останавливаем движение
+                this.getNavigation().stop();
             } else if (isNight && this.getState().equals("sleep")) {
                 this.setState("panic");
             }
@@ -114,8 +114,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Явно указываем тип <SnufflesEntity>, чтобы компилятор не ругался
-        controllers.add(new AnimationController<SnufflesEntity>(this, "main", 5, state -> {
+        // Убрали this из конструктора, так как в GeckoLib 5 он не принимает сущность первым аргументом
+        controllers.add(new AnimationController<>("main", 5, state -> {
             String currentState = this.getState();
             
             if (currentState.equals("sleep")) {
@@ -123,7 +123,6 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
             }
             
             if (currentState.equals("attack") && this.swinging) {
-                // Если атакует - проигрываем анимацию атаки
                 return state.setAndContinue(RawAnimation.begin().thenPlay("Attack"));
             }
             
