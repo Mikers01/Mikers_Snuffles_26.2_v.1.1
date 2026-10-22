@@ -3,7 +3,7 @@
   "biomes": "#minecraft:is_overworld",
   "spawners": {
     "type": "mikers_snuffles:snuffles",
-    "weight": 100,
+    "weight": 200,
     "minCount": 7,
     "maxCount": 10
   }
