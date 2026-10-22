@@ -56,7 +56,6 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public String getState() { return this.entityData.get(STATE); }
     public void setState(String state) { this.entityData.set(STATE, state); }
 
-    // NeoForge 26.2 использует ValueOutput / ValueInput
     @Override
     public void addAdditionalSaveData(ValueOutput output) {
         super.addAdditionalSaveData(output);
@@ -67,7 +66,6 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void readAdditionalSaveData(ValueInput input) {
         super.readAdditionalSaveData(input);
-        // getInt и getString возвращают Optional, поэтому используем orElse
         this.setVariant(input.getInt("Variant").orElse(0));
         this.setState(input.getString("State").orElse("panic"));
     }
@@ -88,10 +86,9 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     @Override
     public void tick() {
         super.tick();
-        // isClientSide() - метод, а не поле
         if (!this.level().isClientSide()) {
-            // Вместо getDayTime() используем dayTime()
-            long time = this.level().dayTime() % 24000;
+            // Используем getDayTime() вместо dayTime()
+            long time = this.level().getDayTime() % 24000;
             boolean isDay = time < 12000;
             boolean isNight = time >= 12000;
 
@@ -111,22 +108,10 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         }
     }
 
-    // Метод hurt может быть final, поэтому временно комментируем.
-    // Если сборка пройдет, мы вернем логику через actuallyHurt или другой метод.
-    /*
-    @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        boolean hurt = super.hurt(source, amount);
-        if (hurt && this.getState().equals("sleep")) {
-            this.setState("panic");
-        }
-        return hurt;
-    }
-    */
-
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "main", 5, state -> {
+        // Убираем <> и явно указываем тип
+        controllers.add(new AnimationController<SnufflesEntity>(this, "main", 5, state -> {
             String currentState = this.getState();
             if (currentState.equals("sleep")) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("Sleeping"));
