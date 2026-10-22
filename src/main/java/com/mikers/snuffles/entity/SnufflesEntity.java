@@ -33,7 +33,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
 
     public SnufflesEntity(EntityType<? extends PathfinderMob> type, Level level) {
         super(type, level);
-        this.setVariant(this.random.nextInt(4) + 1); // Рандомная текстура
+        this.setVariant(this.random.nextInt(4) + 1); // Рандомная текстура при спавне
     }
 
     public static AttributeSupplier.Builder createAttributes() {
@@ -76,8 +76,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
         this.goalSelector.addGoal(0, new FloatGoal(this));
         this.goalSelector.addGoal(1, new MeleeAttackGoal(this, 1.2D, false));
         this.goalSelector.addGoal(2, new BreakBlocksGoal(this));
-        // Если цель есть - бежим к ней. Если нет - ищем укрытие (копаем вниз)
-        this.goalSelector.addGoal(3, new DigDownGoal(this));
+        this.goalSelector.addGoal(3, new DigDownGoal(this)); // Новый Goal для копания вниз
         this.goalSelector.addGoal(4, new WaterAvoidingRandomStrollGoal(this, 1.0D));
         this.goalSelector.addGoal(5, new LookAtPlayerGoal(this, Player.class, 8.0F));
 
@@ -94,7 +93,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
             boolean isDay = time < 12000;
             boolean isNight = time >= 12000;
 
-            // Логика переключения состояний
+            // Логика переключения состояний (День/Ночь)
             if (isDay && !this.getState().equals("sleep")) {
                 this.setState("sleep");
                 this.getNavigation().stop(); // Останавливаем движение
@@ -102,7 +101,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
                 this.setState("panic");
             }
 
-            // Переключение в атаку
+            // Логика атаки
             if (!this.getState().equals("sleep")) {
                 if (this.getTarget() != null && !this.getState().equals("attack")) {
                     this.setState("attack");
@@ -114,18 +113,9 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     }
 
     @Override
-    public boolean hurt(net.minecraft.world.damagesource.DamageSource source, float amount) {
-        boolean hurt = super.hurt(source, amount);
-        // Если ударили спящего - просыпается
-        if (hurt && this.getState().equals("sleep")) {
-            this.setState("panic");
-        }
-        return hurt;
-    }
-
-    @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        controllers.add(new AnimationController<>(this, "main", 5, state -> {
+        // Явно указываем тип <SnufflesEntity>, чтобы компилятор не ругался
+        controllers.add(new AnimationController<SnufflesEntity>(this, "main", 5, state -> {
             String currentState = this.getState();
             
             if (currentState.equals("sleep")) {
@@ -133,7 +123,7 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
             }
             
             if (currentState.equals("attack") && this.swinging) {
-                // Если атакует - проигрываем анимацию атаки один раз
+                // Если атакует - проигрываем анимацию атаки
                 return state.setAndContinue(RawAnimation.begin().thenPlay("Attack"));
             }
             
