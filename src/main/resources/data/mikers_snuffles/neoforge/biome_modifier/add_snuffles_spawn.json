@@ -4,7 +4,7 @@
   "spawners": {
     "type": "mikers_snuffles:snuffles",
     "weight": 100,
-    "minCount": 1,
-    "maxCount": 4
+    "minCount": 7,
+    "maxCount": 10
   }
 }
