@@ -22,14 +22,14 @@ repositories {
                 url = 'https://dl.cloudsmith.io/public/geckolib3/geckolib/maven/'
             }
         }
+        // GeckoLib 5 использует group 'com.geckolib' [citation:3][citation:10]
         filter { includeGroupAndSubgroups('com.geckolib') }
     }
 }
 
 dependencies {
-    // Официальный синтаксис GeckoLib 5 для NeoForge 26.2 [citation:2][citation:12]
+    // Правильный артефакт для NeoForge 26.2 (GeckoLib 5) [citation:10][citation:13]
     implementation "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
-    // Рекомендуемая инъекция интерфейсов для ModDevGradle [citation:12]
     interfaceInjectionData "com.geckolib:geckolib-neoforge-${minecraft_version}:${geckolib_version}"
 }
 
