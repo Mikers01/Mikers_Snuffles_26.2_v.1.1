@@ -87,8 +87,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
     public void tick() {
         super.tick();
         if (!this.level().isClientSide()) {
-            // Используем getDayTime() вместо dayTime()
-            long time = this.level().getDayTime() % 24000;
+            // Используем getLevelData().getDayTime()
+            long time = this.level().getLevelData().getDayTime() % 24000;
             boolean isDay = time < 12000;
             boolean isNight = time >= 12000;
 
@@ -110,8 +110,8 @@ public class SnufflesEntity extends PathfinderMob implements GeoEntity {
 
     @Override
     public void registerControllers(AnimatableManager.ControllerRegistrar controllers) {
-        // Убираем <> и явно указываем тип
-        controllers.add(new AnimationController<SnufflesEntity>(this, "main", 5, state -> {
+        // GeckoLib 5: передаем только AnimationStateHandler
+        controllers.add(new AnimationController<>(state -> {
             String currentState = this.getState();
             if (currentState.equals("sleep")) {
                 return state.setAndContinue(RawAnimation.begin().thenLoop("Sleeping"));
