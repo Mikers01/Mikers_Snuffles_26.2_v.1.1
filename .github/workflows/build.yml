@@ -23,7 +23,7 @@ jobs:
       - name: Setup Gradle (without wrapper)
         uses: gradle/actions/setup-gradle@v4
         with:
-          gradle-version: '8.14' # Укажи версию Gradle, совместимую с NeoForge 26.2
+          gradle-version: '9.1.0' # Обновлено для поддержки Java 25
 
       - name: Build with Gradle (directly)
         run: gradle build --no-daemon
